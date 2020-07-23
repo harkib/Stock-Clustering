@@ -51,28 +51,34 @@ if __name__ == '__main__':
     # companies = companies[companies.index < 50]
 
     # get daily change data
-    # start = datetime(2019,11,1)
-    # end = datetime(2020,5,1)
-    # daily_df = get_change(companies['Stock'],start,end,'1d')
-    # daily_df.to_pickle(save_path + 'daily.pkl')
+    start = datetime(2019,11,1)
+    end = datetime(2020,5,1)
+    daily_df = get_change(companies['Stock'],start,end,'1d')
+    daily_df.to_pickle(save_path + 'daily.pkl')
 
-    # # get weekly change data
-    # start = datetime(2018,1,1)
-    # end = datetime(2020,5,1)
-    # weekly_df = get_change(companies['Stock'],start,end,'1wk')
-    # weekly_df.to_pickle(save_path + 'weekly.pkl')
+    # get weekly change data
+    start = datetime(2018,1,1)
+    end = datetime(2020,5,1)
+    weekly_df = get_change(companies['Stock'],start,end,'1wk')
+    weekly_df.to_pickle(save_path + 'weekly.pkl')
 
-    # # get montly change data
-    # start = datetime(2016,1,1)
-    # end = datetime(2020,5,1)
-    # monthly_df = get_change(companies['Stock'],start,end,'1mo')
-    # monthly_df.to_pickle(save_path + 'monthly.pkl')
+    # get montly change data
+    start = datetime(2016,1,1)
+    end = datetime(2020,5,1)
+    monthly_df = get_change(companies['Stock'],start,end,'1mo')
+    monthly_df.to_pickle(save_path + 'monthly.pkl')
 
     # create test data
     start = datetime(2020,5,1)
     end = datetime(2020,7,21)
-    test_df = get_average(companies['Stock'],start,end,'1d')
-    test_df.to_pickle(save_path + 'test.pkl')
-    print(test_df)
+    test_daily_df = get_average(companies['Stock'],start,end,'1d')
+    test_daily_df.to_pickle(save_path + 'test_daily.pkl')
+
+    # create test data
+    start = datetime(2020,5,1)
+    end = datetime(2020,7,21)
+    test_weekly_df = get_average(companies['Stock'],start,end,'1wk')
+    test_weekly_df.to_pickle(save_path + 'test_weekly.pkl')
+    
 
     
