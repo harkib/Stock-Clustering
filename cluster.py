@@ -1,7 +1,8 @@
 from sklearn.cluster import KMeans, AgglomerativeClustering, AffinityPropagation, DBSCAN
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from datetime import datetime
 import pandas as pd
 import numpy as np
-from datetime import datetime
 import pickle
 
 class Clusters:
@@ -31,8 +32,10 @@ class Clusters:
     
     def correlation(self, test_daily, test_weekly):
 
-        test_daily = test_daily.set_index('Stock', drop =True).transpose()
-        test_weekly = test_weekly.set_index('Stock', drop =True).transpose()
+        test_daily = test_daily.transpose()
+        test_weekly = test_weekly.transpose()
+        # test_daily = test_daily.set_index('Stock', drop =True).transpose()
+        # test_weekly = test_weekly.set_index('Stock', drop =True).transpose()
 
         # compute daily r
         r_sum = 0
@@ -72,25 +75,36 @@ class Clusters:
             if len(self.clusters[key]) > 1:
                 print(key, self.clusters[key][:n],'Corr:',self.correlations_daily[key] )
 
+# normalize cols of pd.df
+def normalize_df(df):
 
-    
+    scaler = MinMaxScaler()
+    X = np.array(df)
+    scaler.fit(X)
+    X = scaler.transform(X)
+
+    return pd.DataFrame(X, columns = df.columns, index = df.index)
 
 
 
 if __name__ == '__main__':
 
     # Load Data 
-    daily = pd.read_pickle('Data\daily.pkl')
-    weekly = pd.read_pickle('Data\weekly.pkl')
-    monthly = pd.read_pickle('Data\monthly.pkl')
+    daily = pd.read_pickle('Data\daily.pkl').set_index('Stock', drop =True)
+    weekly = pd.read_pickle('Data\weekly.pkl').set_index('Stock', drop =True)
+    monthly = pd.read_pickle('Data\monthly.pkl').set_index('Stock', drop =True)
+    test_daily = pd.read_pickle(r'Data\test_daily.pkl').set_index('Stock', drop =True)
+    test_weekly = pd.read_pickle(r'Data\test_weekly.pkl').set_index('Stock', drop =True)
     GICS = pd.read_csv('Data\GICS-wiki.csv',encoding='ANSI')
-    test_daily = pd.read_pickle(r'Data\test_daily.pkl')
-    test_weekly = pd.read_pickle(r'Data\test_weekly.pkl')
+
+    # normalize data
+    daily = normalize_df(daily)
+    weekly = normalize_df(weekly)
+    monthly = normalize_df(monthly)
 
     # define input
-    x_cols = daily.columns[:-2]
-    X = np.array(daily[x_cols])
-    Y_stock = daily['Stock']
+    X = np.array(daily)
+    Y_name = daily.index
 
     # build model
     n_clusters = 100
@@ -98,7 +112,7 @@ if __name__ == '__main__':
     Y = model.fit_predict(X)
 
     # evaluate model
-    KMeans_Clusters = Clusters(n_clusters,Y,Y_stock)
+    KMeans_Clusters = Clusters(n_clusters,Y,Y_name)
     print('Cluster Correlation:', KMeans_Clusters.correlation(test_daily, test_weekly))
     KMeans_Clusters.print_()
 
