@@ -102,18 +102,35 @@ if __name__ == '__main__':
     weekly = normalize_df(weekly)
     monthly = normalize_df(monthly)
 
-    # define input
-    X = np.array(daily)
-    Y_name = daily.index
+    # create list of input datas
+    dfs = { 'Daily'     : daily,
+            'Weekly'    : weekly,
+            'Monthly'   : monthly,
+            'Daily + Weekly'    : daily.join(weekly,lsuffix='-d', rsuffix='-w'),
+            'Daily + Monthly'   : daily.join(monthly,lsuffix='-d', rsuffix='-m'),
+            'Weekly + Monthly'  : weekly.join(monthly,lsuffix='-w', rsuffix='-m'),
+            'Daily + Weekly + Monthly' : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m')
+    }
+ 
+    Xs = []
+    Y_names = []
+    for key in dfs.keys():
+        df = dfs[key]
+        Xs.append(np.array(df))
+        Y_names.append(df.index)
 
-    # build model
-    n_clusters = 100
-    model = AgglomerativeClustering(n_clusters=n_clusters)
-    Y = model.fit_predict(X)
+    # test all combinations
+    for X,Y_name,Data_name in zip(Xs,Y_names,dfs.keys()):
 
-    # evaluate model
-    KMeans_Clusters = Clusters(n_clusters,Y,Y_name)
-    print('Cluster Correlation:', KMeans_Clusters.correlation(test_daily, test_weekly))
-    KMeans_Clusters.print_()
+        # build model
+        n_clusters = 200
+        model = AgglomerativeClustering(n_clusters=n_clusters)
+        Y = model.fit_predict(X)
+
+        # evaluate model
+        KMeans_Clusters = Clusters(n_clusters,Y,Y_name)
+        print(Data_name, 'Cluster Correlation:')
+        print(KMeans_Clusters.correlation(test_daily, test_weekly))
+        # KMeans_Clusters.print_()
 
 
