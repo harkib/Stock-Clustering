@@ -106,7 +106,7 @@ if __name__ == '__main__':
     GICS_Sector = pd.get_dummies(GICS['GICS Sector'])
     GICS_Sub = pd.get_dummies(GICS['GICS Sub Industry'])
 
-    # create list of input datas
+    # create dict of input datas
     dfs = { 'Daily'     : daily,
             'Weekly'    : weekly,
             'Monthly'   : monthly,
@@ -130,25 +130,40 @@ if __name__ == '__main__':
             'Daily + Weekly + Monthly + GICS_Sub'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sub,how='inner'),
     }
  
-    Xs = []
-    Y_names = []
-    for key in dfs.keys():
-        df = dfs[key]
-        Xs.append(np.array(df))
-        Y_names.append(df.index)
+    # Xs = []
+    # Y_names = []
+    # for key in dfs.keys():
+    #     df = dfs[key]
+    #     Xs.append(np.array(df))
+    #     Y_names.append(df.index)
+
+    # create dict of models 
+    n_clusters = 150
+    models = {'AgglomerativeClustering' : AgglomerativeClustering(n_clusters=n_clusters),
+                'KMeans'                : KMeans(n_clusters=n_clusters), 
+                # 'AffinityPropagation'   : AffinityPropagation(),
+                # 'DBSCAN'                : DBSCAN(n_clusters=n_clusters),
+    }
+
+
 
     # test all combinations
-    for X,Y_name,Data_name in zip(Xs,Y_names,dfs.keys()):
+    for model_key in models.keys():
+        for df_key in dfs.keys():
 
-        # build model
-        n_clusters = 200
-        model = AgglomerativeClustering(n_clusters=n_clusters)
-        Y = model.fit_predict(X)
+            X = np.array(dfs[df_key])
+            Y_name = dfs[df_key].index
 
-        # evaluate model
-        KMeans_Clusters = Clusters(n_clusters,Y,Y_name)
-        print(Data_name, 'Cluster Correlation:')
-        print(KMeans_Clusters.correlation(test_daily, test_weekly))
-        # KMeans_Clusters.print_()
+            # build model
+            n_clusters = 150
+            model = models[model_key]
+            # model = AgglomerativeClustering(n_clusters=n_clusters)
+            Y = model.fit_predict(X)
+
+            # evaluate model
+            KMeans_Clusters = Clusters(n_clusters,Y,Y_name)
+            print(model_key, df_key, 'Cluster Correlation:')
+            print(KMeans_Clusters.correlation(test_daily, test_weekly))
+            # KMeans_Clusters.print_()
 
 
