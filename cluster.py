@@ -153,6 +153,7 @@ if __name__ == '__main__':
 
 
     # test all combinations
+    results = []
     for model_key in models.keys():
         for df_key in dfs.keys():
 
@@ -167,8 +168,12 @@ if __name__ == '__main__':
 
             # evaluate model
             clusters = Clusters(Y,Y_name)
-            print(model_key, df_key, 'Cluster Correlation:')
-            print(clusters.correlation(test_daily, test_weekly))
-            # KMeans_Clusters.print_()
+            result = clusters.correlation(test_daily, test_weekly)
+            result['Data'] = df_key
+            result['Model'] = model_key
+            print(result)
+            results.append(result)
+            
 
+    pd.DataFrame(results).to_pickle(r'Data\results.pkl')
 
