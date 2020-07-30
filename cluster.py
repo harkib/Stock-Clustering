@@ -22,20 +22,20 @@ class Clusters:
  
     
 
-    def __init__(self,n_clusters_, Y, Y_name):
+    def __init__(self, Y, Y_name):
 
-        self.n_clusters = n_clusters_
-        self.clusters = dict(zip(range(n_clusters_),[[] for i in range(n_clusters_)]))
+        self.n_clusters = max(Y)+1
+        self.clusters = dict(zip(range(self.n_clusters),[[] for i in range(self.n_clusters)]))
 
         for y, stock in zip(Y,Y_name):
+            if y < 0: # some algorithms give -1 classification if it cannot find a good cluster
+                continue
             self.clusters[y].append(stock)
     
     def correlation(self, test_daily, test_weekly):
 
         test_daily = test_daily.transpose()
         test_weekly = test_weekly.transpose()
-        # test_daily = test_daily.set_index('Stock', drop =True).transpose()
-        # test_weekly = test_weekly.set_index('Stock', drop =True).transpose()
 
         # compute daily r
         r_sum = 0
@@ -108,41 +108,34 @@ if __name__ == '__main__':
 
     # create dict of input datas
     dfs = { 'Daily'     : daily,
-            'Weekly'    : weekly,
-            'Monthly'   : monthly,
-            'Daily + Weekly'    : daily.join(weekly,lsuffix='-d', rsuffix='-w'),
-            'Daily + Monthly'   : daily.join(monthly,lsuffix='-d', rsuffix='-m'),
-            'Weekly + Monthly'  : weekly.join(monthly,lsuffix='-w', rsuffix='-m'),
-            'Daily + Weekly + Monthly'  : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m'),
-            'Daily + GICS_Sector'       : daily.join(GICS_Sector,how='inner'),
-            'Weekly + GICS_Sector'      : weekly.join(GICS_Sector,how='inner'),
-            'Monthly + GICS_Sector'     : monthly.join(GICS_Sector,how='inner'),
-            'Daily + Weekly + GICS_Sector'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sector,how='inner'),
-            'Daily + Monthly + GICS_Sector'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sector,how='inner'),
-            'Weekly + Monthly + GICS_Sector'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sector,how='inner'),
-            'Daily + Weekly + Monthly + GICS_Sector'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sector,how='inner'),
-            'Daily + GICS_Sub'       : daily.join(GICS_Sub,how='inner'),
-            'Weekly + GICS_Sub'      : weekly.join(GICS_Sub,how='inner'),
-            'Monthly + GICS_Sub'     : monthly.join(GICS_Sub,how='inner'),
-            'Daily + Weekly + GICS_Sub'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sub,how='inner'),
-            'Daily + Monthly + GICS_Sub'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sub,how='inner'),
-            'Weekly + Monthly + GICS_Sub'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sub,how='inner'),
-            'Daily + Weekly + Monthly + GICS_Sub'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sub,how='inner'),
+            # 'Weekly'    : weekly,
+            # 'Monthly'   : monthly,
+            # 'Daily + Weekly'    : daily.join(weekly,lsuffix='-d', rsuffix='-w'),
+            # 'Daily + Monthly'   : daily.join(monthly,lsuffix='-d', rsuffix='-m'),
+            # 'Weekly + Monthly'  : weekly.join(monthly,lsuffix='-w', rsuffix='-m'),
+            # 'Daily + Weekly + Monthly'  : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m'),
+            # 'Daily + GICS_Sector'       : daily.join(GICS_Sector,how='inner'),
+            # 'Weekly + GICS_Sector'      : weekly.join(GICS_Sector,how='inner'),
+            # 'Monthly + GICS_Sector'     : monthly.join(GICS_Sector,how='inner'),
+            # 'Daily + Weekly + GICS_Sector'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sector,how='inner'),
+            # 'Daily + Monthly + GICS_Sector'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sector,how='inner'),
+            # 'Weekly + Monthly + GICS_Sector'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sector,how='inner'),
+            # 'Daily + Weekly + Monthly + GICS_Sector'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sector,how='inner'),
+            # 'Daily + GICS_Sub'       : daily.join(GICS_Sub,how='inner'),
+            # 'Weekly + GICS_Sub'      : weekly.join(GICS_Sub,how='inner'),
+            # 'Monthly + GICS_Sub'     : monthly.join(GICS_Sub,how='inner'),
+            # 'Daily + Weekly + GICS_Sub'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sub,how='inner'),
+            # 'Daily + Monthly + GICS_Sub'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sub,how='inner'),
+            # 'Weekly + Monthly + GICS_Sub'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sub,how='inner'),
+            # 'Daily + Weekly + Monthly + GICS_Sub'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sub,how='inner'),
     }
- 
-    # Xs = []
-    # Y_names = []
-    # for key in dfs.keys():
-    #     df = dfs[key]
-    #     Xs.append(np.array(df))
-    #     Y_names.append(df.index)
 
     # create dict of models 
     n_clusters = 150
     models = {'AgglomerativeClustering' : AgglomerativeClustering(n_clusters=n_clusters),
                 'KMeans'                : KMeans(n_clusters=n_clusters), 
-                # 'AffinityPropagation'   : AffinityPropagation(),
-                # 'DBSCAN'                : DBSCAN(n_clusters=n_clusters),
+                'AffinityPropagation'   : AffinityPropagation(random_state=5),
+                'DBSCAN'                : DBSCAN(eps=.5,min_samples = 2),
     }
 
 
@@ -161,9 +154,9 @@ if __name__ == '__main__':
             Y = model.fit_predict(X)
 
             # evaluate model
-            KMeans_Clusters = Clusters(n_clusters,Y,Y_name)
+            clusters = Clusters(Y,Y_name)
             print(model_key, df_key, 'Cluster Correlation:')
-            print(KMeans_Clusters.correlation(test_daily, test_weekly))
+            print(clusters.correlation(test_daily, test_weekly))
             # KMeans_Clusters.print_()
 
 
