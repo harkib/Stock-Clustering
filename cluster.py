@@ -10,11 +10,13 @@ class Clusters:
     clusters =  {}
     n_clusters = 0
 
+
     correlations_daily = {}
     correlations_weekly = {}
 
-    n_clusters_occupied_daily = 0
-    n_clusters_occupied_weekly = 0
+    n_clusters_occupied = 0
+    n_stocks_considered = 0
+    n_stocks = 0
 
     r_daily = 0
     r_weekly = 0
@@ -22,20 +24,24 @@ class Clusters:
  
     
 
-    def __init__(self,n_clusters_, Y, Y_name):
+    def __init__(self, Y, Y_name):
 
-        self.n_clusters = n_clusters_
-        self.clusters = dict(zip(range(n_clusters_),[[] for i in range(n_clusters_)]))
+        self.n_clusters = max(Y)+1
+        self.clusters = dict(zip(range(self.n_clusters),[[] for i in range(self.n_clusters)]))
+        self.n_stocks = len(Y_name)
+
 
         for y, stock in zip(Y,Y_name):
+            
+            if y < 0: # some algorithms give -1 classification if it cannot find a good cluster
+                continue
+
             self.clusters[y].append(stock)
     
     def correlation(self, test_daily, test_weekly):
 
         test_daily = test_daily.transpose()
         test_weekly = test_weekly.transpose()
-        # test_daily = test_daily.set_index('Stock', drop =True).transpose()
-        # test_weekly = test_weekly.set_index('Stock', drop =True).transpose()
 
         # compute daily r
         r_sum = 0
@@ -47,9 +53,10 @@ class Clusters:
                 r_avg = np.average(rs)
                 r_sum += r_avg
                 self.correlations_daily[key] = r_avg
-                self.n_clusters_occupied_daily += 1
+                self.n_clusters_occupied += 1
+                self.n_stocks_considered += len(stocks)
 
-        r_daily = r_sum/self.n_clusters_occupied_daily
+        r_daily = r_sum/self.n_clusters_occupied
 
         # compute weekly r
         r_sum = 0
@@ -61,13 +68,12 @@ class Clusters:
                 r_avg = np.average(rs)
                 r_sum += r_avg
                 self.correlations_weekly[key] = r_avg
-                self.n_clusters_occupied_weekly += 1
 
-        r_weekly = r_sum/self.n_clusters_occupied_weekly
+        r_weekly = r_sum/self.n_clusters_occupied
 
         r_avg = (r_daily + r_weekly)/2
         
-        return {'Avg': r_avg, 'Daily': r_daily, 'Weekly':r_weekly}
+        return {'Avg-R': r_avg, 'Daily-R': r_daily, 'Weekly-R':r_weekly, 'Coverage': self.n_stocks_considered/self.n_stocks}
 
     def print_(self,n=10):
 
@@ -106,7 +112,7 @@ if __name__ == '__main__':
     GICS_Sector = pd.get_dummies(GICS['GICS Sector'])
     GICS_Sub = pd.get_dummies(GICS['GICS Sub Industry'])
 
-    # create list of input datas
+    # create dict of input datas
     dfs = { 'Daily'     : daily,
             'Weekly'    : weekly,
             'Monthly'   : monthly,
@@ -129,26 +135,45 @@ if __name__ == '__main__':
             'Weekly + Monthly + GICS_Sub'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sub,how='inner'),
             'Daily + Weekly + Monthly + GICS_Sub'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sub,how='inner'),
     }
- 
-    Xs = []
-    Y_names = []
-    for key in dfs.keys():
-        df = dfs[key]
-        Xs.append(np.array(df))
-        Y_names.append(df.index)
+
+    # create dict of models 
+    models = {'AgglomerativeClustering_100' : AgglomerativeClustering(n_clusters=100),
+                'AgglomerativeClustering_150' : AgglomerativeClustering(n_clusters=150),
+                'AgglomerativeClustering_200' : AgglomerativeClustering(n_clusters=200),
+                'KMeans_100'                : KMeans(n_clusters=100), 
+                'KMeans_150'                : KMeans(n_clusters=150), 
+                'KMeans_200'                : KMeans(n_clusters=200), 
+                'AffinityPropagation'   : AffinityPropagation(random_state=5),
+                'DBSCAN_1/2'            : DBSCAN(eps=.5,min_samples = 2),
+                'DBSCAN_1'            : DBSCAN(eps=1,min_samples = 2),
+                'DBSCAN_1_25'                : DBSCAN(eps=1.25,min_samples = 2),
+                'DBSCAN_1_5'                : DBSCAN(eps=1.5,min_samples = 2),
+    }
+
+
 
     # test all combinations
-    for X,Y_name,Data_name in zip(Xs,Y_names,dfs.keys()):
+    results = []
+    for model_key in models.keys():
+        for df_key in dfs.keys():
 
-        # build model
-        n_clusters = 200
-        model = AgglomerativeClustering(n_clusters=n_clusters)
-        Y = model.fit_predict(X)
+            X = np.array(dfs[df_key])
+            Y_name = dfs[df_key].index
 
-        # evaluate model
-        KMeans_Clusters = Clusters(n_clusters,Y,Y_name)
-        print(Data_name, 'Cluster Correlation:')
-        print(KMeans_Clusters.correlation(test_daily, test_weekly))
-        # KMeans_Clusters.print_()
+            # build model
+            n_clusters = 150
+            model = models[model_key]
+            # model = AgglomerativeClustering(n_clusters=n_clusters)
+            Y = model.fit_predict(X)
 
+            # evaluate model
+            clusters = Clusters(Y,Y_name)
+            result = clusters.correlation(test_daily, test_weekly)
+            result['Data'] = df_key
+            result['Model'] = model_key
+            print(result)
+            results.append(result)
+            
+
+    pd.DataFrame(results).to_pickle(r'Data\results.pkl')
 
