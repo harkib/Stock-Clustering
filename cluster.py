@@ -4,6 +4,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import pickle
+import json
 
 class Clusters:
 
@@ -13,6 +14,7 @@ class Clusters:
 
     correlations_daily = {}
     correlations_weekly = {}
+    correlations_avg = {}
 
     n_clusters_occupied = 0
     n_stocks_considered = 0
@@ -68,6 +70,7 @@ class Clusters:
                 r_avg = np.average(rs)
                 r_sum += r_avg
                 self.correlations_weekly[key] = r_avg
+                self.correlations_avg[key] = (self.correlations_daily[key] + r_avg)/2
 
         r_weekly = r_sum/self.n_clusters_occupied
 
@@ -116,24 +119,24 @@ if __name__ == '__main__':
     dfs = { 'Daily'     : daily,
             'Weekly'    : weekly,
             'Monthly'   : monthly,
-            'Daily + Weekly'    : daily.join(weekly,lsuffix='-d', rsuffix='-w'),
-            'Daily + Monthly'   : daily.join(monthly,lsuffix='-d', rsuffix='-m'),
-            'Weekly + Monthly'  : weekly.join(monthly,lsuffix='-w', rsuffix='-m'),
-            'Daily + Weekly + Monthly'  : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m'),
-            'Daily + GICS_Sector'       : daily.join(GICS_Sector,how='inner'),
-            'Weekly + GICS_Sector'      : weekly.join(GICS_Sector,how='inner'),
-            'Monthly + GICS_Sector'     : monthly.join(GICS_Sector,how='inner'),
-            'Daily + Weekly + GICS_Sector'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sector,how='inner'),
-            'Daily + Monthly + GICS_Sector'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sector,how='inner'),
-            'Weekly + Monthly + GICS_Sector'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sector,how='inner'),
-            'Daily + Weekly + Monthly + GICS_Sector'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sector,how='inner'),
-            'Daily + GICS_Sub'       : daily.join(GICS_Sub,how='inner'),
-            'Weekly + GICS_Sub'      : weekly.join(GICS_Sub,how='inner'),
-            'Monthly + GICS_Sub'     : monthly.join(GICS_Sub,how='inner'),
-            'Daily + Weekly + GICS_Sub'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sub,how='inner'),
-            'Daily + Monthly + GICS_Sub'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sub,how='inner'),
-            'Weekly + Monthly + GICS_Sub'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sub,how='inner'),
-            'Daily + Weekly + Monthly + GICS_Sub'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sub,how='inner'),
+            'Daily+Weekly'    : daily.join(weekly,lsuffix='-d', rsuffix='-w'),
+            'Daily+Monthly'   : daily.join(monthly,lsuffix='-d', rsuffix='-m'),
+            'Weekly+Monthly'  : weekly.join(monthly,lsuffix='-w', rsuffix='-m'),
+            'Daily+Weekly+Monthly'  : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m'),
+            'Daily+GICS_Sector'       : daily.join(GICS_Sector,how='inner'),
+            'Weekly+GICS_Sector'      : weekly.join(GICS_Sector,how='inner'),
+            'Monthly+GICS_Sector'     : monthly.join(GICS_Sector,how='inner'),
+            'Daily+Weekly+GICS_Sector'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sector,how='inner'),
+            'Daily+Monthly+GICS_Sector'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sector,how='inner'),
+            'Weekly+Monthly+GICS_Sector'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sector,how='inner'),
+            'Daily+Weekly+Monthly+GICS_Sector'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sector,how='inner'),
+            'Daily+GICS_Sub'       : daily.join(GICS_Sub,how='inner'),
+            'Weekly+GICS_Sub'      : weekly.join(GICS_Sub,how='inner'),
+            'Monthly+GICS_Sub'     : monthly.join(GICS_Sub,how='inner'),
+            'Daily+Weekly+GICS_Sub'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sub,how='inner'),
+            'Daily+Monthly+GICS_Sub'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sub,how='inner'),
+            'Weekly+Monthly+GICS_Sub'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sub,how='inner'),
+            'Daily+Weekly+Monthly+GICS_Sub'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sub,how='inner'),
     }
 
     # create dict of models 
@@ -152,7 +155,7 @@ if __name__ == '__main__':
                 'KMeans_350'                : KMeans(n_clusters=350), 
                 'KMeans_400'                : KMeans(n_clusters=400), 
                 'AffinityPropagation'   : AffinityPropagation(random_state=5),
-                'DBSCAN_1/2'            : DBSCAN(eps=.5,min_samples = 2),
+                'DBSCAN_0_5'            : DBSCAN(eps=.5,min_samples = 2),
                 'DBSCAN_1'            : DBSCAN(eps=1,min_samples = 2),
                 'DBSCAN_1_25'                : DBSCAN(eps=1.25,min_samples = 2),
                 'DBSCAN_1_5'                : DBSCAN(eps=1.5,min_samples = 2),
@@ -180,9 +183,14 @@ if __name__ == '__main__':
             result = clusters.correlation(test_daily, test_weekly)
             result['Data'] = df_key
             result['Model'] = model_key
-            print(result)
             results.append(result)
-            
+            print(result)
 
-    pd.DataFrame(results).to_pickle(r'Data\results.pkl')
+            # save clusters data
+            with open('Output\\Clusters\\'+ model_key + '_' + df_key + '.json', 'w') as fp:
+                json.dump(clusters.clusters, fp)
+            with open('Output\\Correlations\\'+ model_key + '_' + df_key+ '.json', 'w') as fp:
+                json.dump(clusters.correlations_avg, fp)
+
+    pd.DataFrame(results).to_pickle(r'Output\combination_results.pkl')
 
