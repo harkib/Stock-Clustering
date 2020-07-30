@@ -140,14 +140,23 @@ if __name__ == '__main__':
     models = {'AgglomerativeClustering_100' : AgglomerativeClustering(n_clusters=100),
                 'AgglomerativeClustering_150' : AgglomerativeClustering(n_clusters=150),
                 'AgglomerativeClustering_200' : AgglomerativeClustering(n_clusters=200),
+                'AgglomerativeClustering_250' : AgglomerativeClustering(n_clusters=250),
+                'AgglomerativeClustering_300' : AgglomerativeClustering(n_clusters=300),
+                'AgglomerativeClustering_350' : AgglomerativeClustering(n_clusters=350),
+                'AgglomerativeClustering_400' : AgglomerativeClustering(n_clusters=400),
                 'KMeans_100'                : KMeans(n_clusters=100), 
                 'KMeans_150'                : KMeans(n_clusters=150), 
                 'KMeans_200'                : KMeans(n_clusters=200), 
+                'KMeans_250'                : KMeans(n_clusters=250), 
+                'KMeans_300'                : KMeans(n_clusters=300), 
+                'KMeans_350'                : KMeans(n_clusters=350), 
+                'KMeans_400'                : KMeans(n_clusters=400), 
                 'AffinityPropagation'   : AffinityPropagation(random_state=5),
                 'DBSCAN_1/2'            : DBSCAN(eps=.5,min_samples = 2),
                 'DBSCAN_1'            : DBSCAN(eps=1,min_samples = 2),
                 'DBSCAN_1_25'                : DBSCAN(eps=1.25,min_samples = 2),
                 'DBSCAN_1_5'                : DBSCAN(eps=1.5,min_samples = 2),
+                'DBSCAN_2'                : DBSCAN(eps=2,min_samples = 2),
     }
 
 
