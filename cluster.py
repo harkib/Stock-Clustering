@@ -95,12 +95,16 @@ if __name__ == '__main__':
     monthly = pd.read_pickle('Data\monthly.pkl').set_index('Stock', drop =True)
     test_daily = pd.read_pickle(r'Data\test_daily.pkl').set_index('Stock', drop =True)
     test_weekly = pd.read_pickle(r'Data\test_weekly.pkl').set_index('Stock', drop =True)
-    GICS = pd.read_csv('Data\GICS-wiki.csv',encoding='ANSI')
+    GICS = pd.read_csv('Data\GICS-wiki.csv',encoding='ANSI').set_index('Stock', drop =True)
 
-    # normalize data
+    # normalize base data
     daily = normalize_df(daily)
     weekly = normalize_df(weekly)
     monthly = normalize_df(monthly)
+
+    # create GICS features
+    GICS_Sector = pd.get_dummies(GICS['GICS Sector'])
+    GICS_Sub = pd.get_dummies(GICS['GICS Sub Industry'])
 
     # create list of input datas
     dfs = { 'Daily'     : daily,
@@ -109,7 +113,21 @@ if __name__ == '__main__':
             'Daily + Weekly'    : daily.join(weekly,lsuffix='-d', rsuffix='-w'),
             'Daily + Monthly'   : daily.join(monthly,lsuffix='-d', rsuffix='-m'),
             'Weekly + Monthly'  : weekly.join(monthly,lsuffix='-w', rsuffix='-m'),
-            'Daily + Weekly + Monthly' : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m')
+            'Daily + Weekly + Monthly'  : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m'),
+            'Daily + GICS_Sector'       : daily.join(GICS_Sector,how='inner'),
+            'Weekly + GICS_Sector'      : weekly.join(GICS_Sector,how='inner'),
+            'Monthly + GICS_Sector'     : monthly.join(GICS_Sector,how='inner'),
+            'Daily + Weekly + GICS_Sector'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sector,how='inner'),
+            'Daily + Monthly + GICS_Sector'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sector,how='inner'),
+            'Weekly + Monthly + GICS_Sector'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sector,how='inner'),
+            'Daily + Weekly + Monthly + GICS_Sector'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sector,how='inner'),
+            'Daily + GICS_Sub'       : daily.join(GICS_Sub,how='inner'),
+            'Weekly + GICS_Sub'      : weekly.join(GICS_Sub,how='inner'),
+            'Monthly + GICS_Sub'     : monthly.join(GICS_Sub,how='inner'),
+            'Daily + Weekly + GICS_Sub'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sub,how='inner'),
+            'Daily + Monthly + GICS_Sub'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sub,how='inner'),
+            'Weekly + Monthly + GICS_Sub'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sub,how='inner'),
+            'Daily + Weekly + Monthly + GICS_Sub'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sub,how='inner'),
     }
  
     Xs = []
