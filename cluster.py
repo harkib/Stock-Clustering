@@ -141,7 +141,7 @@ if __name__ == '__main__':
     }
 
     # create dict of models 
-    models = {'AgglomerativeClustering_100'   : AgglomerativeClustering(n_clusters=100),
+    models = { 'AgglomerativeClustering_100'   : AgglomerativeClustering(n_clusters=100),
                 'AgglomerativeClustering_150' : AgglomerativeClustering(n_clusters=150),
                 'AgglomerativeClustering_200' : AgglomerativeClustering(n_clusters=200),
                 'AgglomerativeClustering_250' : AgglomerativeClustering(n_clusters=250),
@@ -155,7 +155,7 @@ if __name__ == '__main__':
                 'KMeans_300'                : KMeans(n_clusters=300), 
                 'KMeans_350'                : KMeans(n_clusters=350), 
                 'KMeans_400'                : KMeans(n_clusters=400), 
-                # 'AffinityPropagation'   : AffinityPropagation(random_state=5),
+                'AffinityPropagation'   : AffinityPropagation(random_state=5),
                 'DBSCAN_0_5'            : DBSCAN(eps=.5,min_samples = 2),
                 'DBSCAN_1'            : DBSCAN(eps=1,min_samples = 2),
                 'DBSCAN_1_25'                : DBSCAN(eps=1.25,min_samples = 2),
@@ -169,6 +169,10 @@ if __name__ == '__main__':
     results = []
     for model_key in models.keys():
         for df_key in dfs.keys():
+            
+            # AffinityPropagation cannot cluster GICS_Sub and GICS_Sector
+            if (model_key =='AffinityPropagation') and (df_key == 'GICS_Sub' or df_key == 'GICS_Sector'):
+                continue
 
             X = np.array(dfs[df_key])
             Y_name = dfs[df_key].index
