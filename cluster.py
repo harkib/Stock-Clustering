@@ -120,10 +120,12 @@ if __name__ == '__main__':
     dfs = { 'Daily'     : daily,
             'Weekly'    : weekly,
             'Monthly'   : monthly,
+            'GICS_Sub'  : GICS_Sub[GICS_Sub.index.isin(daily.index)],
+            'GICS_Sector'     : GICS_Sector[GICS_Sector.index.isin(daily.index)],
             'Daily+Weekly'    : daily.join(weekly,lsuffix='-d', rsuffix='-w'),
             'Daily+Monthly'   : daily.join(monthly,lsuffix='-d', rsuffix='-m'),
             'Weekly+Monthly'  : weekly.join(monthly,lsuffix='-w', rsuffix='-m'),
-            'Daily+Weekly+Monthly'  : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m'),
+            'Daily+Weekly+Monthly'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m'),
             'Daily+GICS_Sector'       : daily.join(GICS_Sector,how='inner'),
             'Weekly+GICS_Sector'      : weekly.join(GICS_Sector,how='inner'),
             'Monthly+GICS_Sector'     : monthly.join(GICS_Sector,how='inner'),
@@ -141,7 +143,7 @@ if __name__ == '__main__':
     }
 
     # create dict of models 
-    models = {'AgglomerativeClustering_100' : AgglomerativeClustering(n_clusters=100),
+    models = {'AgglomerativeClustering_100'   : AgglomerativeClustering(n_clusters=100),
                 'AgglomerativeClustering_150' : AgglomerativeClustering(n_clusters=150),
                 'AgglomerativeClustering_200' : AgglomerativeClustering(n_clusters=200),
                 'AgglomerativeClustering_250' : AgglomerativeClustering(n_clusters=250),
@@ -155,7 +157,7 @@ if __name__ == '__main__':
                 'KMeans_300'                : KMeans(n_clusters=300), 
                 'KMeans_350'                : KMeans(n_clusters=350), 
                 'KMeans_400'                : KMeans(n_clusters=400), 
-                'AffinityPropagation'   : AffinityPropagation(random_state=5),
+                # 'AffinityPropagation'   : AffinityPropagation(random_state=5),
                 'DBSCAN_0_5'            : DBSCAN(eps=.5,min_samples = 2),
                 'DBSCAN_1'            : DBSCAN(eps=1,min_samples = 2),
                 'DBSCAN_1_25'                : DBSCAN(eps=1.25,min_samples = 2),
