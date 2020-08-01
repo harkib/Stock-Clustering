@@ -16,6 +16,7 @@ class Clusters:
     correlations_weekly = {}
     correlations_avg = {}
 
+    n_R_considered = 0
     n_clusters_occupied = 0
     n_stocks_considered = 0
     n_stocks = 0
@@ -51,14 +52,15 @@ class Clusters:
             
             stocks = self.clusters[key]
             if len(stocks) > 1:
-                rs = np.array(test_daily[stocks].corr())[np.triu_indices(len(stocks),k=1)]
-                r_avg = np.average(rs)
-                r_sum += r_avg
-                self.correlations_daily[key] = r_avg
+                n = len(stocks)
+                rs = np.array(test_daily[stocks].corr())[np.triu_indices(n,k=1)]
+                r_sum += np.sum(rs)
+                self.correlations_daily[key] = np.average(rs)
                 self.n_clusters_occupied += 1
-                self.n_stocks_considered += len(stocks)
+                self.n_stocks_considered += n
+                self.n_R_considered += (n**2 -n)/2
 
-        r_daily = r_sum/self.n_clusters_occupied
+        r_daily = r_sum/self.n_R_considered
 
         # compute weekly r
         r_sum = 0
@@ -67,12 +69,11 @@ class Clusters:
             stocks = self.clusters[key]
             if len(stocks) > 1:
                 rs = np.array(test_weekly[stocks].corr())[np.triu_indices(len(stocks),k=1)]
-                r_avg = np.average(rs)
-                r_sum += r_avg
-                self.correlations_weekly[key] = r_avg
-                self.correlations_avg[key] = (self.correlations_daily[key] + r_avg)/2
+                r_sum += np.sum(rs)
+                self.correlations_weekly[key] = np.average(rs)
+                self.correlations_avg[key] = (self.correlations_daily[key] + np.average(rs))/2
 
-        r_weekly = r_sum/self.n_clusters_occupied
+        r_weekly = r_sum/self.n_R_considered
 
         r_avg = (r_daily + r_weekly)/2
         
@@ -185,11 +186,15 @@ if __name__ == '__main__':
             result['Model'] = model_key
             results.append(result)
             print(result)
+            # print(clusters.correlations_avg)
+            # print(clusters.correlations_daily)
+            # print(clusters.correlations_weekly)
+            # clusters.print_()
 
             # save clusters data
-            with open('Output\\Clusters\\'+ model_key + '_' + df_key + '.json', 'w') as fp:
+            with open('Output\\Clusters\\'+ model_key + '_' + df_key + '.json', 'w+') as fp:
                 json.dump(clusters.clusters, fp)
-            with open('Output\\Correlations\\'+ model_key + '_' + df_key+ '.json', 'w') as fp:
+            with open('Output\\Correlations\\'+ model_key + '_' + df_key+ '.json', 'w+') as fp:
                 json.dump(clusters.correlations_avg, fp)
 
     pd.DataFrame(results).to_pickle(r'Output\combination_results.pkl')
