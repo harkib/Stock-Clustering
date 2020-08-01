@@ -8,30 +8,24 @@ import json
 
 class Clusters:
 
-    clusters =  {}
-    n_clusters = 0
-
-
-    correlations_daily = {}
-    correlations_weekly = {}
-    correlations_avg = {}
-
-    n_R_considered = 0
-    n_clusters_occupied = 0
-    n_stocks_considered = 0
-    n_stocks = 0
-
-    r_daily = 0
-    r_weekly = 0
-    r_avg = 0
- 
-    
-
     def __init__(self, Y, Y_name):
 
         self.n_clusters = max(Y)+1
         self.clusters = dict(zip(range(self.n_clusters),[[] for i in range(self.n_clusters)]))
         self.n_stocks = len(Y_name)
+
+        self.correlations_daily = {}
+        self.correlations_weekly = {}
+        self.correlations_avg = {}
+
+        self.n_R_considered = 0
+        self.n_clusters_occupied = 0
+        self.n_stocks_considered = 0
+
+
+        self.r_daily = 0
+        self.r_weekly = 0
+        self.r_avg = 0
 
 
         for y, stock in zip(Y,Y_name):
@@ -48,10 +42,12 @@ class Clusters:
 
         # compute daily r
         r_sum = 0
+        d_c = 0
         for key in self.clusters.keys():
             
             stocks = self.clusters[key]
             if len(stocks) > 1:
+                d_c += 1
                 n = len(stocks)
                 rs = np.array(test_daily[stocks].corr())[np.triu_indices(n,k=1)]
                 r_sum += np.sum(rs)
@@ -63,11 +59,13 @@ class Clusters:
         r_daily = r_sum/self.n_R_considered
 
         # compute weekly r
+        w_c = 0
         r_sum = 0
         for key in self.clusters.keys():
             
             stocks = self.clusters[key]
             if len(stocks) > 1:
+                w_c += 1
                 rs = np.array(test_weekly[stocks].corr())[np.triu_indices(len(stocks),k=1)]
                 r_sum += np.sum(rs)
                 self.correlations_weekly[key] = np.average(rs)
@@ -76,7 +74,7 @@ class Clusters:
         r_weekly = r_sum/self.n_R_considered
 
         r_avg = (r_daily + r_weekly)/2
-        
+
         return {'Avg-R': r_avg, 'Daily-R': r_daily, 'Weekly-R':r_weekly, 'Coverage': self.n_stocks_considered/self.n_stocks}
 
     def print_(self,n=10):
@@ -178,7 +176,6 @@ if __name__ == '__main__':
             # build model
             n_clusters = 150
             model = models[model_key]
-            # model = AgglomerativeClustering(n_clusters=n_clusters)
             Y = model.fit_predict(X)
 
             # evaluate model
@@ -188,10 +185,6 @@ if __name__ == '__main__':
             result['Model'] = model_key
             results.append(result)
             print(result)
-            # print(clusters.correlations_avg)
-            # print(clusters.correlations_daily)
-            # print(clusters.correlations_weekly)
-            # clusters.print_()
 
             # save clusters data
             with open('Output\\Clusters\\'+ model_key + '_' + df_key + '.json', 'w+') as fp:
