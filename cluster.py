@@ -4,31 +4,28 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import pickle
+import json
 
 class Clusters:
-
-    clusters =  {}
-    n_clusters = 0
-
-
-    correlations_daily = {}
-    correlations_weekly = {}
-
-    n_clusters_occupied = 0
-    n_stocks_considered = 0
-    n_stocks = 0
-
-    r_daily = 0
-    r_weekly = 0
-    r_avg = 0
- 
-    
 
     def __init__(self, Y, Y_name):
 
         self.n_clusters = max(Y)+1
         self.clusters = dict(zip(range(self.n_clusters),[[] for i in range(self.n_clusters)]))
         self.n_stocks = len(Y_name)
+
+        self.correlations_daily = {}
+        self.correlations_weekly = {}
+        self.correlations_avg = {}
+
+        self.n_R_considered = 0
+        self.n_clusters_occupied = 0
+        self.n_stocks_considered = 0
+
+
+        self.r_daily = 0
+        self.r_weekly = 0
+        self.r_avg = 0
 
 
         for y, stock in zip(Y,Y_name):
@@ -45,34 +42,39 @@ class Clusters:
 
         # compute daily r
         r_sum = 0
+        d_c = 0
         for key in self.clusters.keys():
             
             stocks = self.clusters[key]
             if len(stocks) > 1:
-                rs = np.array(test_daily[stocks].corr())[np.triu_indices(len(stocks),k=1)]
-                r_avg = np.average(rs)
-                r_sum += r_avg
-                self.correlations_daily[key] = r_avg
+                d_c += 1
+                n = len(stocks)
+                rs = np.array(test_daily[stocks].corr())[np.triu_indices(n,k=1)]
+                r_sum += np.sum(rs)
+                self.correlations_daily[key] = np.average(rs)
                 self.n_clusters_occupied += 1
-                self.n_stocks_considered += len(stocks)
+                self.n_stocks_considered += n
+                self.n_R_considered += (n**2 -n)/2
 
-        r_daily = r_sum/self.n_clusters_occupied
+        r_daily = r_sum/self.n_R_considered
 
         # compute weekly r
+        w_c = 0
         r_sum = 0
         for key in self.clusters.keys():
             
             stocks = self.clusters[key]
             if len(stocks) > 1:
+                w_c += 1
                 rs = np.array(test_weekly[stocks].corr())[np.triu_indices(len(stocks),k=1)]
-                r_avg = np.average(rs)
-                r_sum += r_avg
-                self.correlations_weekly[key] = r_avg
+                r_sum += np.sum(rs)
+                self.correlations_weekly[key] = np.average(rs)
+                self.correlations_avg[key] = (self.correlations_daily[key] + np.average(rs))/2
 
-        r_weekly = r_sum/self.n_clusters_occupied
+        r_weekly = r_sum/self.n_R_considered
 
         r_avg = (r_daily + r_weekly)/2
-        
+
         return {'Avg-R': r_avg, 'Daily-R': r_daily, 'Weekly-R':r_weekly, 'Coverage': self.n_stocks_considered/self.n_stocks}
 
     def print_(self,n=10):
@@ -116,38 +118,49 @@ if __name__ == '__main__':
     dfs = { 'Daily'     : daily,
             'Weekly'    : weekly,
             'Monthly'   : monthly,
-            'Daily + Weekly'    : daily.join(weekly,lsuffix='-d', rsuffix='-w'),
-            'Daily + Monthly'   : daily.join(monthly,lsuffix='-d', rsuffix='-m'),
-            'Weekly + Monthly'  : weekly.join(monthly,lsuffix='-w', rsuffix='-m'),
-            'Daily + Weekly + Monthly'  : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m'),
-            'Daily + GICS_Sector'       : daily.join(GICS_Sector,how='inner'),
-            'Weekly + GICS_Sector'      : weekly.join(GICS_Sector,how='inner'),
-            'Monthly + GICS_Sector'     : monthly.join(GICS_Sector,how='inner'),
-            'Daily + Weekly + GICS_Sector'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sector,how='inner'),
-            'Daily + Monthly + GICS_Sector'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sector,how='inner'),
-            'Weekly + Monthly + GICS_Sector'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sector,how='inner'),
-            'Daily + Weekly + Monthly + GICS_Sector'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sector,how='inner'),
-            'Daily + GICS_Sub'       : daily.join(GICS_Sub,how='inner'),
-            'Weekly + GICS_Sub'      : weekly.join(GICS_Sub,how='inner'),
-            'Monthly + GICS_Sub'     : monthly.join(GICS_Sub,how='inner'),
-            'Daily + Weekly + GICS_Sub'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sub,how='inner'),
-            'Daily + Monthly + GICS_Sub'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sub,how='inner'),
-            'Weekly + Monthly + GICS_Sub'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sub,how='inner'),
-            'Daily + Weekly + Monthly + GICS_Sub'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sub,how='inner'),
+            'GICS_Sub'  : GICS_Sub[GICS_Sub.index.isin(daily.index)],
+            'GICS_Sector'     : GICS_Sector[GICS_Sector.index.isin(daily.index)],
+            'Daily+Weekly'    : daily.join(weekly,lsuffix='-d', rsuffix='-w'),
+            'Daily+Monthly'   : daily.join(monthly,lsuffix='-d', rsuffix='-m'),
+            'Weekly+Monthly'  : weekly.join(monthly,lsuffix='-w', rsuffix='-m'),
+            'Daily+Weekly+Monthly'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m'),
+            'Daily+GICS_Sector'       : daily.join(GICS_Sector,how='inner'),
+            'Weekly+GICS_Sector'      : weekly.join(GICS_Sector,how='inner'),
+            'Monthly+GICS_Sector'     : monthly.join(GICS_Sector,how='inner'),
+            'Daily+Weekly+GICS_Sector'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sector,how='inner'),
+            'Daily+Monthly+GICS_Sector'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sector,how='inner'),
+            'Weekly+Monthly+GICS_Sector'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sector,how='inner'),
+            'Daily+Weekly+Monthly+GICS_Sector'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sector,how='inner'),
+            'Daily+GICS_Sub'       : daily.join(GICS_Sub,how='inner'),
+            'Weekly+GICS_Sub'      : weekly.join(GICS_Sub,how='inner'),
+            'Monthly+GICS_Sub'     : monthly.join(GICS_Sub,how='inner'),
+            'Daily+Weekly+GICS_Sub'      : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(GICS_Sub,how='inner'),
+            'Daily+Monthly+GICS_Sub'     : daily.join(monthly,lsuffix='-d', rsuffix='-m').join(GICS_Sub,how='inner'),
+            'Weekly+Monthly+GICS_Sub'    : weekly.join(monthly,lsuffix='-w', rsuffix='-m').join(GICS_Sub,how='inner'),
+            'Daily+Weekly+Monthly+GICS_Sub'    : daily.join(weekly,lsuffix='-d', rsuffix='-w').join(monthly,lsuffix='', rsuffix='-m').join(GICS_Sub,how='inner'),
     }
 
     # create dict of models 
-    models = {'AgglomerativeClustering_100' : AgglomerativeClustering(n_clusters=100),
+    models = { 'AgglomerativeClustering_100'   : AgglomerativeClustering(n_clusters=100),
                 'AgglomerativeClustering_150' : AgglomerativeClustering(n_clusters=150),
                 'AgglomerativeClustering_200' : AgglomerativeClustering(n_clusters=200),
+                'AgglomerativeClustering_250' : AgglomerativeClustering(n_clusters=250),
+                'AgglomerativeClustering_300' : AgglomerativeClustering(n_clusters=300),
+                'AgglomerativeClustering_350' : AgglomerativeClustering(n_clusters=350),
+                'AgglomerativeClustering_400' : AgglomerativeClustering(n_clusters=400),
                 'KMeans_100'                : KMeans(n_clusters=100), 
                 'KMeans_150'                : KMeans(n_clusters=150), 
                 'KMeans_200'                : KMeans(n_clusters=200), 
+                'KMeans_250'                : KMeans(n_clusters=250), 
+                'KMeans_300'                : KMeans(n_clusters=300), 
+                'KMeans_350'                : KMeans(n_clusters=350), 
+                'KMeans_400'                : KMeans(n_clusters=400), 
                 'AffinityPropagation'   : AffinityPropagation(random_state=5),
-                'DBSCAN_1/2'            : DBSCAN(eps=.5,min_samples = 2),
+                'DBSCAN_0_5'            : DBSCAN(eps=.5,min_samples = 2),
                 'DBSCAN_1'            : DBSCAN(eps=1,min_samples = 2),
                 'DBSCAN_1_25'                : DBSCAN(eps=1.25,min_samples = 2),
                 'DBSCAN_1_5'                : DBSCAN(eps=1.5,min_samples = 2),
+                'DBSCAN_2'                : DBSCAN(eps=2,min_samples = 2),
     }
 
 
@@ -156,6 +169,10 @@ if __name__ == '__main__':
     results = []
     for model_key in models.keys():
         for df_key in dfs.keys():
+            
+            # AffinityPropagation cannot cluster GICS_Sub and GICS_Sector
+            if (model_key =='AffinityPropagation') and (df_key == 'GICS_Sub' or df_key == 'GICS_Sector'):
+                continue
 
             X = np.array(dfs[df_key])
             Y_name = dfs[df_key].index
@@ -163,7 +180,6 @@ if __name__ == '__main__':
             # build model
             n_clusters = 150
             model = models[model_key]
-            # model = AgglomerativeClustering(n_clusters=n_clusters)
             Y = model.fit_predict(X)
 
             # evaluate model
@@ -171,9 +187,14 @@ if __name__ == '__main__':
             result = clusters.correlation(test_daily, test_weekly)
             result['Data'] = df_key
             result['Model'] = model_key
-            print(result)
             results.append(result)
-            
+            print(result)
 
-    pd.DataFrame(results).to_pickle(r'Data\results.pkl')
+            # save clusters data
+            with open('Output\\Clusters\\'+ model_key + '_' + df_key + '.json', 'w+') as fp:
+                json.dump(clusters.clusters, fp)
+            with open('Output\\Correlations\\'+ model_key + '_' + df_key+ '.json', 'w+') as fp:
+                json.dump(clusters.correlations_avg, fp)
+
+    pd.DataFrame(results).to_pickle(r'Output\combination_results.pkl')
 
