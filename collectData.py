@@ -45,8 +45,14 @@ def get_average(stocks,start,end,interval):
 if __name__ == '__main__':
 
     # load companies
-    comapines_path = 'Data\\Companies.csv'
-    save_path = 'Data\\'
+    # comapines_path = 'Data\\Companies.csv'
+    # save_path = 'Data\\'
+    # comapines_path = 'Data/Companies.csv'
+    # save_path = 'Data/'
+
+    comapines_path = os.path.join('Data','Companies.csv')
+    save_path = os.path.join('Data/')
+
     companies = pd.read_csv(comapines_path)
     # companies = companies[companies.index < 50]
 
