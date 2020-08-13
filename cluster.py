@@ -199,11 +199,11 @@ if __name__ == '__main__':
                 'MiniBatchKMeans_250'   : MiniBatchKMeans(n_clusters=250),
                 'MiniBatchKMeans_300'   : MiniBatchKMeans(n_clusters=300),
 
-                'OPTICS_0_5'                :OPTICS(eps = 0.5, min_samples = 2),
+                # 'OPTICS_0_5'                :OPTICS(eps = 0.5, min_samples = 2),
                 'OPTICS_1_0'                :OPTICS(eps = 1.5, min_samples = 2),
-                'OPTICS_1_5'                :OPTICS(eps = 2.0, min_samples = 2),
-                'OPTICS_2_5'                :OPTICS(eps = 2.5, min_samples = 2),
-                'OPTICS_3_0'                :OPTICS(eps = 3.0, min_samples = 2),
+                # 'OPTICS_1_5'                :OPTICS(eps = 2.0, min_samples = 2),
+                # 'OPTICS_2_5'                :OPTICS(eps = 2.5, min_samples = 2),
+                # 'OPTICS_3_0'                :OPTICS(eps = 3.0, min_samples = 2),
 
 
                 'MeanShift_1_0'                :MeanShift(bandwidth = 1.0),
@@ -260,7 +260,7 @@ if __name__ == '__main__':
     result_path = os.path.join('Output','combination_results.pkl')
 
     # pd.DataFrame(results).to_pickle(r'Output/combination_results.pkl')
-    pd.DataFrame(results).to_pickle(r'Output/combination_results.pkl')
+    pd.DataFrame(results).to_pickle(result_path)
 
 
 
