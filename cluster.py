@@ -1,10 +1,11 @@
-from sklearn.cluster import KMeans, AgglomerativeClustering, AffinityPropagation, DBSCAN
+from sklearn.cluster import KMeans, AgglomerativeClustering, AffinityPropagation, DBSCAN, FeatureAgglomeration, MiniBatchKMeans, OPTICS, MeanShift
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from datetime import datetime
 import pandas as pd
 import numpy as np
 import pickle
 import json
+import os
 
 class Clusters:
 
@@ -98,12 +99,30 @@ def normalize_df(df):
 if __name__ == '__main__':
 
     # Load Data 
-    daily = pd.read_pickle('Data\daily.pkl').set_index('Stock', drop =True)
-    weekly = pd.read_pickle('Data\weekly.pkl').set_index('Stock', drop =True)
-    monthly = pd.read_pickle('Data\monthly.pkl').set_index('Stock', drop =True)
-    test_daily = pd.read_pickle(r'Data\test_daily.pkl').set_index('Stock', drop =True)
-    test_weekly = pd.read_pickle(r'Data\test_weekly.pkl').set_index('Stock', drop =True)
-    GICS = pd.read_csv('Data\GICS-wiki.csv',encoding='ANSI').set_index('Stock', drop =True)
+    # daily = pd.read_pickle('Data\daily.pkl').set_index('Stock', drop =True)
+    # weekly = pd.read_pickle('Data\weekly.pkl').set_index('Stock', drop =True)
+    # monthly = pd.read_pickle('Data\monthly.pkl').set_index('Stock', drop =True)
+    # test_daily = pd.read_pickle(r'Data\test_daily.pkl').set_index('Stock', drop =True)
+    # test_weekly = pd.read_pickle(r'Data\test_weekly.pkl').set_index('Stock', drop =True)
+    # GICS = pd.read_csv('Data\GICS-wiki.csv',encoding='ANSI').set_index('Stock', drop =True)
+
+    daily_path  = os.path.join('Data','daily.pkl')
+    weekly_path = os.path.join('Data','weekly.pkl')
+    monthly_path = os.path.join('Data','monthly.pkl')
+    GICS_path    = os.path.join('Data','GICS-wiki.csv')
+
+
+    daily       = pd.read_pickle(daily_path).set_index('Stock', drop =True)
+    weekly      = pd.read_pickle(weekly_path).set_index('Stock', drop =True)
+    monthly     = pd.read_pickle(monthly_path).set_index('Stock', drop =True)
+    
+    test_daily  = pd.read_pickle(r'Data/test_daily.pkl').set_index('Stock', drop =True)
+    test_weekly = pd.read_pickle(r'Data/test_weekly.pkl').set_index('Stock', drop =True)
+
+    # https://stackoverflow.com/questions/19699367/for-line-in-results-in-unicodedecodeerror-utf-8-codec-cant-decode-byte
+
+    GICS = pd.read_csv(GICS_path, encoding='ISO-8859-1').set_index('Stock', drop =True)
+
 
     # normalize base data
     daily = normalize_df(daily)
@@ -141,7 +160,8 @@ if __name__ == '__main__':
     }
 
     # create dict of models 
-    models = { 'AgglomerativeClustering_100'   : AgglomerativeClustering(n_clusters=100),
+    models = {
+                'AgglomerativeClustering_100' : AgglomerativeClustering(n_clusters=100),
                 'AgglomerativeClustering_150' : AgglomerativeClustering(n_clusters=150),
                 'AgglomerativeClustering_200' : AgglomerativeClustering(n_clusters=200),
                 'AgglomerativeClustering_250' : AgglomerativeClustering(n_clusters=250),
@@ -156,11 +176,43 @@ if __name__ == '__main__':
                 'KMeans_350'                : KMeans(n_clusters=350), 
                 'KMeans_400'                : KMeans(n_clusters=400), 
                 'AffinityPropagation'   : AffinityPropagation(random_state=5),
-                'DBSCAN_0_5'            : DBSCAN(eps=.5,min_samples = 2),
-                'DBSCAN_1'            : DBSCAN(eps=1,min_samples = 2),
-                'DBSCAN_1_25'                : DBSCAN(eps=1.25,min_samples = 2),
-                'DBSCAN_1_5'                : DBSCAN(eps=1.5,min_samples = 2),
-                'DBSCAN_2'                : DBSCAN(eps=2,min_samples = 2),
+                'DBSCAN_0_5'            : DBSCAN(eps=0.5, min_samples = 2),
+                'DBSCAN_1'              : DBSCAN(eps=1,   min_samples = 2),
+                'DBSCAN_1_25'           : DBSCAN(eps=1.25,min_samples = 2),
+                'DBSCAN_1_5'            : DBSCAN(eps=1.5, min_samples = 2),
+                'DBSCAN_2'              : DBSCAN(eps=2,   min_samples = 2),
+
+                # FeatureAgglomeration did not have fit_predict and fail in this version
+                # 'FeatureAgglomeration_100'   : FeatureAgglomeration(n_clusters=100),
+                # 'FeatureAgglomeration_150'   : FeatureAgglomeration(n_clusters=150),
+                # 'FeatureAgglomeration_200'   : FeatureAgglomeration(n_clusters=200),
+                # 'FeatureAgglomeration_250'   : FeatureAgglomeration(n_clusters=250),
+                # 'FeatureAgglomeration_300'   : FeatureAgglomeration(n_clusters=300),
+                # 'FeatureAgglomeration_350'   : FeatureAgglomeration(n_clusters=350),
+                # 'FeatureAgglomeration_400'   : FeatureAgglomeration(n_clusters=400),
+
+
+
+                'MiniBatchKMeans_100'   : MiniBatchKMeans(n_clusters=100),
+                'MiniBatchKMeans_150'   : MiniBatchKMeans(n_clusters=150),
+                'MiniBatchKMeans_200'   : MiniBatchKMeans(n_clusters=200),
+                'MiniBatchKMeans_250'   : MiniBatchKMeans(n_clusters=250),
+                'MiniBatchKMeans_300'   : MiniBatchKMeans(n_clusters=300),
+
+                # 'OPTICS_0_5'                :OPTICS(eps = 0.5, min_samples = 2),
+                'OPTICS_1_0'                :OPTICS(eps = 1.5, min_samples = 2),
+                # 'OPTICS_1_5'                :OPTICS(eps = 2.0, min_samples = 2),
+                # 'OPTICS_2_5'                :OPTICS(eps = 2.5, min_samples = 2),
+                # 'OPTICS_3_0'                :OPTICS(eps = 3.0, min_samples = 2),
+
+
+                'MeanShift_1_0'                :MeanShift(bandwidth = 1.0),
+                'MeanShift_1_5'                :MeanShift(bandwidth = 1.5),
+                'MeanShift_2_0'                :MeanShift(bandwidth = 2.0),
+                'MeanShift_2_5'                :MeanShift(bandwidth = 2.5),
+                'MeanShift_3_0'                :MeanShift(bandwidth = 3.0),
+
+
     }
 
 
@@ -191,10 +243,25 @@ if __name__ == '__main__':
             print(result)
 
             # save clusters data
-            with open('Output\\Clusters\\'+ model_key + '_' + df_key + '.json', 'w+') as fp:
+            # with open('Output\\Clusters\\'+ model_key + '_' + df_key + '.json', 'w+') as fp:
+            #     json.dump(clusters.clusters, fp)
+            # with open('Output\\Correlations\\'+ model_key + '_' + df_key+ '.json', 'w+') as fp:
+            #     json.dump(clusters.correlations_avg, fp)
+
+            Clusters_path     = os.path.join('Output','Clusters')
+            Correlations_path = os.path.join('Output','Correlations')
+
+            with open(Clusters_path + model_key + '_' + df_key + '.json', 'w+') as fp:
                 json.dump(clusters.clusters, fp)
-            with open('Output\\Correlations\\'+ model_key + '_' + df_key+ '.json', 'w+') as fp:
+            with open(Correlations_path + model_key + '_' + df_key+ '.json', 'w+') as fp:
                 json.dump(clusters.correlations_avg, fp)
 
-    pd.DataFrame(results).to_pickle(r'Output\combination_results.pkl')
+    # pd.DataFrame(results).to_pickle(r'Output\combination_results.pkl')
+    result_path = os.path.join('Output','combination_results.pkl')
+
+    # pd.DataFrame(results).to_pickle(r'Output/combination_results.pkl')
+    pd.DataFrame(results).to_pickle(result_path)
+
+
+
 
